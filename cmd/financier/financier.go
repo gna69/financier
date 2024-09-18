@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	telegramAdapter "financier/internal/adapter/telegram"
 	"financier/internal/config"
 	"financier/internal/driver/telegram"
 	"os"
@@ -19,7 +20,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	telegramBot, err := telegram.NewBot(cfg.TelegamToken)
+	telegramBotAdapter := telegramAdapter.NewAdapter()
+
+	telegramBot, err := telegram.NewBot(cfg.TelegamToken, telegramBotAdapter)
 	if err != nil {
 		slog.Error("failed to create telegram bot", "err", err)
 		os.Exit(1)

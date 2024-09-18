@@ -2,7 +2,7 @@ package telegram
 
 import (
 	"context"
-	"fmt"
+	"log/slog"
 
 	tgbotapi "github.com/Syfaro/telegram-bot-api"
 )
@@ -11,24 +11,26 @@ type (
 	Usecase interface {
 	}
 
-	API interface {
+	Adapter interface {
+		HandleUpdate(update *tgbotapi.Update) error
 	}
 )
 
 type Bot struct {
 	api *tgbotapi.BotAPI
 
-	usecase Usecase
+	adapter Adapter
 }
 
-func NewBot(token string) (*Bot, error) {
+func NewBot(token string, adapter Adapter) (*Bot, error) {
 	api, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Bot{
-		api: api,
+		api:     api,
+		adapter: adapter,
 	}, nil
 }
 
@@ -41,12 +43,10 @@ func (b *Bot) Run(ctx context.Context) error {
 		return err
 	}
 
-	for message := range chat {
-		if message.Message == nil {
-			continue
+	for updateEvent := range chat {
+		if err := b.adapter.HandleUpdate(&updateEvent); err != nil {
+			slog.Error("failed to handle telegram update", "err", err)
 		}
-
-		fmt.Println(message.Message)
 	}
 
 	return nil
